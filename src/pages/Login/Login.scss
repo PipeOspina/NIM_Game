@@ -1,0 +1,48 @@
+.Button {
+  width: 500px;
+}
+
+.container {
+  height: 100vh;
+  > * {
+    width: 90%;
+    margin: 10px 0 !important;
+  }
+  form > *:not(.checkbox) {
+    width: 100%;
+    margin: 10px 0 !important;
+  }
+}
+
+.register {
+  padding-right: 5px;
+}
+
+.checkbox {
+  margin: 0 0 0 -10px !important;
+}
+
+@media (min-width: 600px) {
+  .container {
+    height: 85vh;
+    > * {
+      width: 400px;
+    }
+  }
+}
+
+.link {
+  width: 50%;
+}
+
+.last {
+  justify-items: flex-end;
+}
+
+.red {
+  background-color: red;
+}
+
+.blue {
+  background-color: blue;
+}

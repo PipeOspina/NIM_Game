@@ -1,11 +1,11 @@
-import React from 'react'
+import React, { Fragment } from 'react'
 import ReactDOM from 'react-dom'
+import Login from './pages/Login/Login'
+import './index.scss'
 
 export default function App(): JSX.Element {
   return (
-    <h1>
-      Hello!
-    </h1>
+    <Login></Login>
   )
 }
 
