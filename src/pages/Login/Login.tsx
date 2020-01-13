@@ -12,9 +12,9 @@ import {
   Box
 } from '@material-ui/core'
 
-export default function Login(): JSX.Element {
+export default function Login(props: any): JSX.Element {
   const preventDefault = (event: React.SyntheticEvent) => event.preventDefault()
-
+  console.log(props)
   return (
     <Grid
       container

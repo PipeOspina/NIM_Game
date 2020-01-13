@@ -6,14 +6,16 @@ module.exports = {
   entry: './src/index.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'foo.bundle.js'
+    filename: 'foo.bundle.js',
+    publicPath: '/'
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.json']
   },
   devServer: {
     contentBase: './dist',
-    port: 3000
+    port: 3000,
+    historyApiFallback: true
   },
   module: {
     rules: [
