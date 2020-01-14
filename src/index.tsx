@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import Login from './pages/Login/Login'
 import './index.scss'
 import {
-  HashRouter as Router,
+  BrowserRouter as Router,
   Switch,
   Route,
   Redirect,
