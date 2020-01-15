@@ -1,16 +1,25 @@
-.Button {
-  width: 500px;
-}
-
 .container {
-  height: 100vh;
+  min-height: 85vh;
   > * {
     width: 90%;
     margin: 10px 0 !important;
   }
-  form > *:not(.checkbox) {
+
+  form > *:not(.checkbox):not(.google-btn) {
     width: 100%;
     margin: 10px 0 !important;
+  }
+
+  .google-btn {
+    width: 100%;
+    margin-top: -5px !important;
+    .my-icon {
+      position: absolute;
+      left: 8px;
+      padding: 4px;
+      border-radius: 50%;
+      background-color: #2196f3;
+    }
   }
 }
 
@@ -23,11 +32,8 @@
 }
 
 @media (min-width: 600px) {
-  .container {
-    height: 85vh;
-    > * {
-      width: 400px;
-    }
+  .container > * {
+    width: 400px;
   }
 }
 
