@@ -24,6 +24,7 @@ import Visibility from '@material-ui/icons/Visibility';
 import VisibilityOff from '@material-ui/icons/VisibilityOff';
 import login from '../../utils/consts/googleSign'
 import realLogin from '../../utils/sign'
+import { Link as RouterLink } from 'react-router-dom'
 
 export default function Login(): JSX.Element {
   const preventDefault = (event: React.SyntheticEvent) => event.preventDefault()
@@ -126,7 +127,7 @@ export default function Login(): JSX.Element {
     setUsrHelper('')
     setPassHelper('')
     setDoCharge(true)
-    login(doRemember).then(() => {
+    login().then(() => {
       setDoCharge(false)
     }).catch(() => {
       setDoCharge(false)
@@ -157,7 +158,7 @@ export default function Login(): JSX.Element {
         onSubmit={submit}
       >
         <TextField
-          label="Usuario"
+          label="Correo Electrónico"
           type="email"
           variant="outlined"
           autoComplete="username"
@@ -167,7 +168,6 @@ export default function Login(): JSX.Element {
           onBlur={usrBlur}
           error={doUsrErr}
           helperText={usrHelper}
-          autoFocus
           required
           InputLabelProps={
             {
@@ -177,11 +177,10 @@ export default function Login(): JSX.Element {
         />
         <FormControl variant="outlined"
           error={doPassErr}>
-          <InputLabel>Constraseña</InputLabel>
+          <InputLabel>Contraseña</InputLabel>
           <OutlinedInput
             type={visibility ? 'text' : 'password'}
             onChange={togglePass}
-            value={password}
             endAdornment={
               <InputAdornment position="end">
                 <IconButton
@@ -197,7 +196,7 @@ export default function Login(): JSX.Element {
                 </IconButton>
               </InputAdornment>
             }
-            labelWidth={93}
+            labelWidth={86}
             name="password"
             id="password"
             autoComplete="current-password"
@@ -256,8 +255,8 @@ export default function Login(): JSX.Element {
             item
           >
             <Link
-              href="#"
-              onClick={preventDefault}
+              to="/register"
+              component={RouterLink}
               className="register"
             >
               Registrarse

@@ -1,0 +1,22 @@
+@media (min-width: 300px) {
+  .names {
+    > * {
+      width: 48%;
+    }
+    :first-child {
+      margin-right: 4%;
+    }
+  }
+}
+
+@media (max-width: 300px) {
+  .names {
+    > * {
+      width: 100%;
+    }
+
+    .last-name {
+      margin-top: 20px;
+    }
+  }
+}

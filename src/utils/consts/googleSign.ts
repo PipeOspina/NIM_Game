@@ -1,16 +1,12 @@
 import * as firebase from "firebase/app";
 import "firebase/auth";
 
-export default function login(doRemember: boolean) {
+export default function login() {
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.addScope("https://www.googleapis.com/auth/contacts.readonly");
   firebase.auth().languageCode = "es";
 
-  const persistence = doRemember
-    ? firebase.auth.Auth.Persistence.LOCAL
-    : firebase.auth.Auth.Persistence.SESSION;
-
-  firebase.auth().setPersistence(persistence);
+  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
   return firebase.auth().signInWithPopup(provider);
 }
@@ -22,5 +18,5 @@ export function logout() {
     .then((result: any) => {
       console.log(result);
     })
-    .catch((err: any) => {});
+    .catch(() => {});
 }

@@ -14,3 +14,7 @@ export default function realLogin(
 
   return firebase.auth().signInWithEmailAndPassword(email, pass);
 }
+
+export function register(email: string, pass: string) {
+  return firebase.auth().createUserWithEmailAndPassword(email, pass);
+}
