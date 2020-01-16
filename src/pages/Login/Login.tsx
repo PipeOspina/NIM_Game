@@ -11,16 +11,33 @@ import {
   FormControlLabel,
   Typography,
   Link,
-  Box
+  Box,
+  LinearProgress,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
+  InputAdornment,
+  IconButton,
+  FormHelperText
 } from '@material-ui/core'
+import Visibility from '@material-ui/icons/Visibility';
+import VisibilityOff from '@material-ui/icons/VisibilityOff';
+import login from '../../utils/consts/googleSign'
+import realLogin from '../../utils/sign'
 
-
-export default function Login(props: any): JSX.Element {
+export default function Login(): JSX.Element {
   const preventDefault = (event: React.SyntheticEvent) => event.preventDefault()
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [doRemember, setDoRemember] = useState(false)
+
+  const [doCharge, setDoCharge] = useState(false)
+
+  const [visibility, setVisibility] = useState(false)
+
+  const [usrHelper, setUsrHelper] = useState('')
+  const [passHelper, setPassHelper] = useState('')
 
   const [doUsrErr, setDoUsrErr] = useState(false)
   const [doPassErr, setDopassErr] = useState(false)
@@ -38,13 +55,13 @@ export default function Login(props: any): JSX.Element {
     setDopassErr(checkPass(password))
   }
 
-  const toggleUsr = (event: any) => {
+  const toggleUsr = (event: React.ChangeEvent<HTMLInputElement>) => {
     const usr = event.target.value
     doUsrBlur ? setDoUsrErr(checkUsr(usr)) : 0
     setUsername(usr)
   }
 
-  const togglePass = (event: any) => {
+  const togglePass = (event: React.ChangeEvent<HTMLInputElement>) => {
     const pass = event.target.value
     doPassBlur ? setDopassErr(checkPass(pass)) : 0
     setPassword(pass)
@@ -53,10 +70,12 @@ export default function Login(props: any): JSX.Element {
   const checkUsr = (usr: string) => {
     const regex: RegExp = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
     const err = !usr.match(regex)
+    err ? setUsrHelper('Digita correctamente tu correo electrónico') : setUsrHelper('')
     return err
   }
 
   const checkPass = (pass: string) => {
+    !pass ? setPassHelper('Digita tu contraseña') : setPassHelper('')
     return !pass
   }
 
@@ -68,14 +87,61 @@ export default function Login(props: any): JSX.Element {
     const anyPassErr = checkPass(password)
     setDoUsrErr(anyUsrErr)
     setDopassErr(anyPassErr)
-    const user = {
-      usr: username,
-      pass: password,
-      remember: doRemember
+
+    if (!anyUsrErr && !anyPassErr) {
+      setDoCharge(true)
+      realLogin(username, password, doRemember)
+        .then(() => {
+          setDoCharge(false)
+        }).catch((err: any) => {
+          switch (err.code) {
+            case 'auth/user-disabled':
+              setUsrHelper('Usuario inhabilitado')
+              setDoUsrErr(true)
+              break;
+            case 'auth/user-not-found':
+              setUsrHelper('Usuario no encontrado')
+              setDoUsrErr(true)
+              break;
+            case 'auth/wrong-password':
+              setPassHelper('Contraseña incorrecta')
+              setDopassErr(true)
+              break;
+            default:
+              setUsrHelper('Digita correctamente tu correo electrónico')
+              setDoUsrErr(true)
+              break;
+          }
+          setPassword('')
+          setDoCharge(false)
+        })
     }
-    if (anyUsrErr || anyPassErr) console.log('err')
-    else console.log('logging in', user)
   }
+
+  const googleLogin = () => {
+    setDoUsrErr(false)
+    setDopassErr(false)
+    setDoUsrBlur(false)
+    setDoPassBlur(false)
+    setUsrHelper('')
+    setPassHelper('')
+    setDoCharge(true)
+    login(doRemember).then(() => {
+      setDoCharge(false)
+    }).catch(() => {
+      setDoCharge(false)
+      setDoUsrErr(true)
+      setUsrHelper('Se canceló el inicio de sesión con Google')
+    })
+  }
+
+  const handleClickShowPassword = () => {
+    setVisibility(!visibility);
+  };
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
 
   return (
     <Grid
@@ -86,7 +152,6 @@ export default function Login(props: any): JSX.Element {
       className="container"
       direction="column"
     >
-      err: {'' + doUsrErr}
       <form
         noValidate
         onSubmit={submit}
@@ -101,6 +166,7 @@ export default function Login(props: any): JSX.Element {
           onChange={toggleUsr}
           onBlur={usrBlur}
           error={doUsrErr}
+          helperText={usrHelper}
           autoFocus
           required
           InputLabelProps={
@@ -109,23 +175,37 @@ export default function Login(props: any): JSX.Element {
             }
           }
         />
-        <TextField
-          label="Contraseña"
-          type="password"
-          name="password"
-          id="password"
-          variant="outlined"
-          autoComplete="current-password"
-          onBlur={passBlur}
-          onChange={togglePass}
-          error={doPassErr}
-          required
-          InputLabelProps={
-            {
-              required: false
+        <FormControl variant="outlined"
+          error={doPassErr}>
+          <InputLabel>Constraseña</InputLabel>
+          <OutlinedInput
+            type={visibility ? 'text' : 'password'}
+            onChange={togglePass}
+            value={password}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={handleClickShowPassword}
+                  onMouseDown={handleMouseDownPassword}
+                  edge="end"
+                >
+                  {
+                    !visibility ?
+                      <Visibility color={doPassErr ? 'secondary' : 'inherit'} /> :
+                      <VisibilityOff color={doPassErr ? 'secondary' : 'inherit'} />
+                  }
+                </IconButton>
+              </InputAdornment>
             }
-          }
-        />
+            labelWidth={93}
+            name="password"
+            id="password"
+            autoComplete="current-password"
+            onBlur={passBlur}
+            required
+          />
+          {doPassErr ? <FormHelperText>{passHelper}</FormHelperText> : ''}
+        </FormControl>
         <FormControlLabel
           control={
             <Checkbox
@@ -147,6 +227,7 @@ export default function Login(props: any): JSX.Element {
           variant="contained"
           color="primary"
           className="google-btn"
+          onClick={googleLogin}
         >
           <GoogleIcon
             className="my-icon"
@@ -187,6 +268,7 @@ export default function Login(props: any): JSX.Element {
       <Box>
         <Copyright />
       </Box>
+      {doCharge ? <LinearProgress className="charge" /> : ''}
     </Grid >
   )
 }

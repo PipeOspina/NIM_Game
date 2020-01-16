@@ -10,6 +10,10 @@ import {
   Link
 } from 'react-router-dom'
 import Home from './pages/Home'
+import * as firebase from 'firebase/app'
+import config from './utils/consts/config'
+
+firebase.initializeApp(config);
 
 export default function App(): JSX.Element {
   return (
