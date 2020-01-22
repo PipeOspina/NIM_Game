@@ -10,7 +10,9 @@ import {
   FormHelperText,
   Box,
   LinearProgress,
-  Button
+  Button,
+  Typography,
+  Link
 } from '@material-ui/core'
 import {
   Visibility,
@@ -24,7 +26,7 @@ import GoogleButton from '../../components/GoogleButton/GoogleButton'
 import GoogleIcon from '../../components/icons/GoogleIcon'
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
-
+import { Link as RouterLink } from 'react-router-dom'
 
 export default function Register(): JSX.Element {
   const [states, setStates] = useState({
@@ -165,7 +167,7 @@ export default function Register(): JSX.Element {
           />
         </Grid>
         <TextField
-          label="Nombre En El Juego"
+          label="Nombre en el juego"
           type="text"
           variant="outlined"
           autoComplete="nickname"
@@ -183,7 +185,7 @@ export default function Register(): JSX.Element {
           }
         />
         <TextField
-          label="Correo Electrónico"
+          label="Correo electrónico"
           type="email"
           variant="outlined"
           autoComplete="email"
@@ -249,6 +251,21 @@ export default function Register(): JSX.Element {
           Registrarse con Google
         </GoogleButton>
       </form>
+      <Typography>
+        <Grid
+          container
+        >
+          <Grid xs item ></Grid>
+          <Grid>
+            <Link
+              to="/login" BuildBuild
+              component={RouterLink}
+            >
+              ¿Ya tienes una cuenta? Inicia sesión
+            </Link>
+          </Grid>
+        </Grid>
+      </Typography>
       <Box>
         <Copyright />
       </Box>

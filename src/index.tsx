@@ -14,6 +14,9 @@ import Home from './pages/Home'
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
 import config from './utils/consts/config'
+import Engine from './utils/game-engine/model/Engine'
+import Board from './utils/game-engine/model/Board'
+import { Button } from '@material-ui/core'
 
 firebase.initializeApp(config);
 
@@ -22,6 +25,23 @@ firebase.auth().onAuthStateChanged((usr: any) => {
 })
 
 export default function App(): JSX.Element {
+  const board = new Board()
+  const gameEngine = new Engine(board, 1, true)
+
+
+  const call = () => {
+    const i = Number.parseInt(window.prompt('i') || '0')
+    const j = Number.parseInt(window.prompt('j') || '0')
+    board.consoleDraw()
+
+    //De momento funciona pero solo una vez, pues en la siguiente todos los binarios son pares, entonces no encuentra que hacer y no hace nada xF
+  }
+
+  const click = (event: React.BaseSyntheticEvent<HTMLButtonElement>) => {
+    board.consoleDraw()
+    gameEngine.step(call)
+  }
+
   return (
     <Fragment>
       <Router>
@@ -34,6 +54,9 @@ export default function App(): JSX.Element {
           </Route>
         </Switch>
       </Router>
+      <Button
+        onClick={click}
+      >Presiona we :u</Button>
     </Fragment>
   )
 }
