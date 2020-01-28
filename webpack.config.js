@@ -1,5 +1,6 @@
 const path = require('path')
 const TerserPlugin = require('terser-webpack-plugin')
+const htmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
   mode: 'production',
@@ -15,7 +16,8 @@ module.exports = {
   devServer: {
     contentBase: './dist',
     port: 3000,
-    historyApiFallback: true
+    historyApiFallback: true,
+    disableHostCheck: true
   },
   module: {
     rules: [
@@ -48,5 +50,10 @@ module.exports = {
   optimization: {
     minimize: true,
     minimizer: [new TerserPlugin()]
-  }
+  },
+  plugins: [
+    new htmlWebpackPlugin({
+      template: 'src/index.html'
+    })
+  ]
 }

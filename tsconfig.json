@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es2015",
-    "module": "es2015",
+    "baseUrl": "./",
+    "declaration": false,
+    "moduleResolution": "node",
+    "target": "ESNext",
     "jsx": "react",
     "outDir": "dist",
     "rootDir": "src",
@@ -27,7 +29,8 @@
     "src/**/*.tsx"
   ],
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "./*"
   ],
   "exclude": [
     "dist",

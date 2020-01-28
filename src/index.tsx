@@ -37,7 +37,7 @@ export default function App(): JSX.Element {
     //De momento funciona pero solo una vez, pues en la siguiente todos los binarios son pares, entonces no encuentra que hacer y no hace nada xF
   }
 
-  const click = (event: React.BaseSyntheticEvent<HTMLButtonElement>) => {
+  const click = (event: React.MouseEvent) => {
     board.consoleDraw()
     gameEngine.step(call)
   }
