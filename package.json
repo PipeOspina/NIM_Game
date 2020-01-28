@@ -29,6 +29,8 @@
     "@types/react": "^16.9.17",
     "@types/react-dom": "^16.9.4",
     "babel-loader": "^8.0.6",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-polyfill": "^6.26.0",
     "css-loader": "^3.4.1",
     "node-sass": "^4.13.0",
     "sass-loader": "^8.0.0",
