@@ -31,4 +31,8 @@ export default class BoardRow {
     this.toothpicks = toothpicks;
     this.size = toothpicks.length;
   }
+
+  getEnabledBinary(): string {
+    return this.getEnabledToothpicks().length.toString(2)
+  }
 }

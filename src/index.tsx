@@ -26,20 +26,34 @@ firebase.auth().onAuthStateChanged((usr: any) => {
 
 export default function App(): JSX.Element {
   const board = new Board()
-  const gameEngine = new Engine(board, 1, true)
+  const gameEngine = new Engine(board, 1)
 
 
-  const call = () => {
-    const i = Number.parseInt(window.prompt('i') || '0')
-    const j = Number.parseInt(window.prompt('j') || '0')
+  const call = async () => {
     board.consoleDraw()
-
+    let continuar = 'si';
+    while (continuar === 'si' || continuar === '') {
+      const i = Number.parseInt(await window.prompt('i') || '0')
+      const fromj = Number.parseInt(await window.prompt('From j') || '0')
+      const toj = Number.parseInt(await window.prompt('To j') || '0')
+      board.getBoardRows()[i].getToothpicks().forEach((tooth, j) => {
+        if (j >= fromj && j <= toj) {
+          tooth.disable()
+        }
+      })
+      continuar = await window.prompt('Digite "si" si desea seguir ingresando datos') || ''
+      board.consoleDraw()
+    }
+    setTimeout(() => {
+      gameEngine.step(call)
+      board.consoleDraw()
+    }, 5000);
+    //gameEngine.step(call)
     //De momento funciona pero solo una vez, pues en la siguiente todos los binarios son pares, entonces no encuentra que hacer y no hace nada xF
   }
 
   const click = (event: React.MouseEvent) => {
-    board.consoleDraw()
-    gameEngine.step(call)
+    call()
   }
 
   return (
