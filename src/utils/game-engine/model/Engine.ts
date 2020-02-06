@@ -97,8 +97,6 @@ export default class Engine {
           counter--;
         }
       });
-      console.log(binaryOfEnables.bigger, bigger, newBinaries);
-      console.log(this.board.getEnabledBinaries());
     }
   }
 

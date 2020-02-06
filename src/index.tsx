@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom'
 import Login from './pages/Login/Login'
 import Register from './pages/Register/Register'
@@ -7,24 +7,32 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Redirect,
-  Link
+  Redirect
 } from 'react-router-dom'
 import Home from './pages/Home'
-import * as firebase from 'firebase/app'
-import 'firebase/auth'
-import config from './utils/consts/config'
 import Engine from './utils/game-engine/model/Engine'
 import Board from './utils/game-engine/model/Board'
-import { Button } from '@material-ui/core'
-
-firebase.initializeApp(config);
-
-firebase.auth().onAuthStateChanged((usr: any) => {
-  console.log(usr)
-})
+import Game from './pages/Game/Game'
+import PrivateRoute from './components/Auth/PrivateRoute'
+import { UserProvider } from './components/Auth/UserProvider'
 
 export default function App(): JSX.Element {
+  return (
+    <Router>
+      <Switch>
+        <Route path='/home' component={Home} />
+        <PrivateRoute path='/game' component={Game} />
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route exact path="/">
+          <Redirect to='/login' />
+        </Route>
+      </Switch>
+    </Router>
+  )
+  /*
+  const currentUser = useContext(AuthContext)
+
   const board = new Board()
   const gameEngine = new Engine(board, 1)
 
@@ -52,29 +60,25 @@ export default function App(): JSX.Element {
     //De momento funciona pero solo una vez, pues en la siguiente todos los binarios son pares, entonces no encuentra que hacer y no hace nada xF
   }
 
-  const click = (event: React.MouseEvent) => {
-    call()
-  }
-
   return (
-    <Fragment>
+    <AuthProvider>
       <Router>
         <Switch>
           <Route path='/home' component={Home} />
+          <Route path='/game'>
+            {currentUser ? <Game /> : <Redirect to='/login' />}
+          </Route>
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
           <Route exact path="/">
-            <Redirect to="/login" />
+            <Redirect to="/game" />
           </Route>
         </Switch>
       </Router>
-      <Button
-        onClick={click}
-      >Presiona we :u</Button>
-    </Fragment>
+    </AuthProvider>
   )
+  */
 }
 
 const root = document.getElementById('app-root')
-
-ReactDOM.render(<App />, root)
+ReactDOM.render((<UserProvider><App /></UserProvider>), root)

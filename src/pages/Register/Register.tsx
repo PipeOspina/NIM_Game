@@ -20,13 +20,8 @@ import {
 } from '@material-ui/icons'
 import './Register.scss'
 import Copyright from '../../components/Copyright'
-import googleLogin from '../../utils/consts/googleSign'
-import { register } from '../../utils/sign'
 import GoogleButton from '../../components/GoogleButton/GoogleButton'
 import GoogleIcon from '../../components/icons/GoogleIcon'
-import * as firebase from 'firebase/app'
-import 'firebase/auth'
-import { Link as RouterLink } from 'react-router-dom'
 
 export default function Register(): JSX.Element {
   const [states, setStates] = useState({
@@ -84,24 +79,30 @@ export default function Register(): JSX.Element {
     event.preventDefault()
     if (!states.doLastErr && !states.doNameErr && !states.doEmailErr && !states.doNickErr && !states.doPassErr) {
       setStates({ ...states, doCharge: true })
-      register(states.email, states.password).then(() => {
-        const user = firebase.auth().currentUser
-        user.updateProfile({
-          displayName: states.name + ' ' + states.lastName
-        }).then(() => {
-          user.sendEmailVerification().then(() => {
-            setStates({ ...states, doCharge: false })
-            console.log('Te hemos enviado un correo electrónico')
+      /*
+      register(states.email, states.password).then((res) => {
+        const user = res.user//firebase.auth().currentUser
+        if (user) {
+          user.updateProfile({
+            displayName: states.name + ' ' + states.lastName
+          }).then(() => {
+            user.sendEmailVerification().then(() => {
+              setStates({ ...states, doCharge: false })
+              console.log('Te hemos enviado un correo electrónico')
+            }).catch(() => {
+              setStates({ ...states, doCharge: false })
+              console.log('Correo electrónico fallido :c')
+            })
           }).catch(() => {
             setStates({ ...states, doCharge: false })
-            console.log('Correo electrónico fallido :c')
           })
-        }).catch(() => {
-          setStates({ ...states, doCharge: false })
-        })
+        } else {
+          throw new Error('Error al crear el nuevo usuario :\'c')
+        }
       }).catch(() => {
         setStates({ ...states, doCharge: false })
       })
+      */
     }
   }
 

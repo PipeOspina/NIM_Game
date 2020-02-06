@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import Copyright from '../../components/Copyright'
 import './Login.scss'
 import GoogleIcon from '../../components/icons/GoogleIcon'
@@ -18,16 +18,28 @@ import {
   OutlinedInput,
   InputAdornment,
   IconButton,
-  FormHelperText
+  FormHelperText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Backdrop
 } from '@material-ui/core'
-import Visibility from '@material-ui/icons/Visibility';
-import VisibilityOff from '@material-ui/icons/VisibilityOff';
-import login from '../../utils/consts/googleSign'
-import realLogin from '../../utils/sign'
-import { Link as RouterLink } from 'react-router-dom'
+import Visibility from '@material-ui/icons/Visibility'
+import VisibilityOff from '@material-ui/icons/VisibilityOff'
+import { Link as RouterLink, useHistory } from 'react-router-dom'
+import { UserContext, SET_USER } from '../../components/Auth/UserProvider'
+import { signIn, WITH_EMAIL, getUser } from '../../components/Auth/FirebaseAuth'
+import { useAsync, Async } from 'react-async'
+import { User } from 'firebase'
 
 export default function Login(): JSX.Element {
   const preventDefault = (event: React.SyntheticEvent) => event.preventDefault()
+
+  const { dispatch } = useContext(UserContext)
+
+  const { data: user, isLoading } = useAsync({ promiseFn: getUser })
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -39,12 +51,25 @@ export default function Login(): JSX.Element {
 
   const [usrHelper, setUsrHelper] = useState('')
   const [passHelper, setPassHelper] = useState('')
+  const [googleErrorMessage, setGoogleErrorMessage] = useState('')
 
   const [doUsrErr, setDoUsrErr] = useState(false)
-  const [doPassErr, setDopassErr] = useState(false)
+  const [doPassErr, setDoPassErr] = useState(false)
 
   const [doUsrBlur, setDoUsrBlur] = useState(false)
   const [doPassBlur, setDoPassBlur] = useState(false)
+
+  const [openDialog, setOpenDialog] = useState(false)
+
+  const history = useHistory();
+
+  /*
+  useEffect(() => {
+    setDoCharge(isLoading)
+  }, [isLoading])
+  */
+
+  user ? history.push('/game') : 0
 
   const usrBlur = () => {
     setDoUsrBlur(true)
@@ -53,7 +78,7 @@ export default function Login(): JSX.Element {
 
   const passBlur = () => {
     setDoPassBlur(true)
-    setDopassErr(checkPass(password))
+    setDoPassErr(checkPass(password))
   }
 
   const toggleUsr = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +89,7 @@ export default function Login(): JSX.Element {
 
   const togglePass = (event: React.ChangeEvent<HTMLInputElement>) => {
     const pass = event.target.value
-    doPassBlur ? setDopassErr(checkPass(pass)) : 0
+    doPassBlur ? setDoPassErr(checkPass(pass)) : 0
     setPassword(pass)
   }
 
@@ -87,14 +112,16 @@ export default function Login(): JSX.Element {
     const anyUsrErr = checkUsr(username)
     const anyPassErr = checkPass(password)
     setDoUsrErr(anyUsrErr)
-    setDopassErr(anyPassErr)
+    setDoPassErr(anyPassErr)
 
     if (!anyUsrErr && !anyPassErr) {
       setDoCharge(true)
-      realLogin(username, password, doRemember)
-        .then(() => {
+      signIn(WITH_EMAIL, doRemember, username, password)
+        .then(usr => {
+          dispatch({ type: SET_USER, payload: usr })
           setDoCharge(false)
-        }).catch((err: any) => {
+          history.push('/game')
+        }).catch(err => {
           switch (err.code) {
             case 'auth/user-disabled':
               setUsrHelper('Usuario inhabilitado')
@@ -106,27 +133,63 @@ export default function Login(): JSX.Element {
               break;
             case 'auth/wrong-password':
               setPassHelper('Contraseña incorrecta')
-              setDopassErr(true)
+              setDoPassErr(true)
               break;
             default:
               setUsrHelper('Digita correctamente tu correo electrónico')
               setDoUsrErr(true)
               break;
           }
-          setPassword('')
           setDoCharge(false)
         })
+      setPassword('')
+      /*
+      realLogin(username, password, doRemember)
+        .then(() => {
+          setDoCharge(false)
+          history.push('/game')
+        })
+        */
     }
   }
 
   const googleLogin = () => {
+    setOpenDialog(false)
     setDoUsrErr(false)
-    setDopassErr(false)
+    setDoPassErr(false)
     setDoUsrBlur(false)
     setDoPassBlur(false)
     setUsrHelper('')
     setPassHelper('')
     setDoCharge(true)
+    signIn(1, true)
+      .then(usr => {
+        dispatch({ type: SET_USER, payload: usr })
+        setDoCharge(false)
+        history.push('/game')
+      }).catch(err => {
+        setOpenDialog(true)
+        switch (err.code) {
+          case 'auth/cancelled-popup-request': {
+            setGoogleErrorMessage('El inicio de sesión ha sido bloqueado por el servidor')
+            break;
+          }
+          case 'auth/popup-blocked': {
+            setGoogleErrorMessage('El Pop-Up ha sido bloqueado por el navegador')
+            break;
+          }
+          case 'auth/popup-closed-by-user': {
+            setGoogleErrorMessage('Cerraste el PopUp de inicio de sesión con Google antes de tiempo')
+            break;
+          }
+          default: {
+            setGoogleErrorMessage('Error al tratar de iniciar sesión con Google')
+            break;
+          }
+        }
+        setDoCharge(false)
+      })
+    /*
     login().then(() => {
       setDoCharge(false)
     }).catch(() => {
@@ -134,6 +197,7 @@ export default function Login(): JSX.Element {
       setDoUsrErr(true)
       setUsrHelper('Se canceló el inicio de sesión con Google')
     })
+    */
   }
 
   const handleClickShowPassword = () => {
@@ -144,7 +208,7 @@ export default function Login(): JSX.Element {
     event.preventDefault();
   };
 
-  return (
+  return (!isLoading ?
     <Grid
       container
       spacing={0}
@@ -267,7 +331,26 @@ export default function Login(): JSX.Element {
       <Box>
         <Copyright />
       </Box>
-      {doCharge ? <LinearProgress className="charge" /> : ''}
+      <Backdrop open={doCharge} className='backdrop' >
+        <LinearProgress className="charge" />
+      </Backdrop>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+      >
+        <DialogTitle>{"Error al iniciar sesión con Google"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{googleErrorMessage}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={googleLogin} color="primary">
+            Intentar Nuevamente
+          </Button>
+          <Button onClick={() => setOpenDialog(false)} color="primary">
+            Aceptar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Grid >
-  )
+    : <div></div>)
 }
