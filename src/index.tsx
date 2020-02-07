@@ -15,6 +15,7 @@ import Board from './utils/game-engine/model/Board'
 import Game from './pages/Game/Game'
 import PrivateRoute from './components/Auth/PrivateRoute'
 import { UserProvider } from './components/Auth/UserProvider'
+import Verify from './components/Auth/Verify'
 
 export default function App(): JSX.Element {
   return (
@@ -24,6 +25,7 @@ export default function App(): JSX.Element {
         <PrivateRoute path='/game' component={Game} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
+        <Route path='/verify' component={Verify} />
         <Route exact path="/">
           <Redirect to='/login' />
         </Route>

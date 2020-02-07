@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useContext } from "react";
 import {
   Grid,
   TextField,
@@ -12,7 +12,13 @@ import {
   LinearProgress,
   Button,
   Typography,
-  Link
+  Link,
+  Backdrop,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
 } from '@material-ui/core'
 import {
   Visibility,
@@ -22,91 +28,176 @@ import './Register.scss'
 import Copyright from '../../components/Copyright'
 import GoogleButton from '../../components/GoogleButton/GoogleButton'
 import GoogleIcon from '../../components/icons/GoogleIcon'
+import { register, signIn } from "../../components/Auth/FirebaseAuth";
+import { UserContext, SET_USER } from "../../components/Auth/UserProvider";
+import { Link as RouterLink, useHistory } from 'react-router-dom'
 
 export default function Register(): JSX.Element {
-  const [states, setStates] = useState({
-    visibility: false,
-    doCharge: false,
-    doNameErr: false,
-    doLastErr: false,
-    doNickErr: false,
-    doEmailErr: false,
-    doPassErr: false,
-    emailBlur: false,
-    name: '',
-    lastName: '',
-    nickname: '',
-    email: '',
-    password: '',
-    nameHelper: '',
-    lastHelper: '',
-    nickHelper: '',
-    emailHelper: '',
-    passHelper: ''
-  })
+  const [visibility, setVisibility] = useState(false)
+  const [doCharge, setDoCharge] = useState(false)
+  const [doNameErr, setDoNameErr] = useState(false)
+  const [doLastErr, setDoLastErr] = useState(false)
+  const [doNickErr, setDoNickErr] = useState(false)
+  const [doEmailErr, setDoEmailErr] = useState(false)
+  const [doPassErr, setDoPassErr] = useState(false)
+  const [emailBlur, setEmailBlur] = useState(false)
+  const [name, setName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [nickname, setNickname] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [nameHelper, setNameHelper] = useState('')
+  const [lastHelper, setLastHelper] = useState('')
+  const [nickHelper, setNickHelper] = useState('')
+  const [emailHelper, setEmailHelper] = useState('')
+  const [passHelper, setPassHelper] = useState('')
+  const [isDialogError, setIsDialogError] = useState(false)
+
+  const functions = {
+    setDoNameErr,
+    setDoLastErr,
+    setDoNickErr,
+    setDoEmailErr,
+    setDoPassErr,
+    setName,
+    setLastName,
+    setNickname,
+    setEmail,
+    setPassword,
+    setNameHelper,
+    setLastHelper,
+    setNickHelper,
+    setEmailHelper,
+    setPassHelper
+  }
+
+  const [openDialog, setOpenDialog] = useState(false)
+  const [dialogMessage, setDialogMessage] = useState('')
+  const [dialogTitle, setDialogTitle] = useState('')
+
+  const { dispatch } = useContext(UserContext)
+  const history = useHistory()
 
   const toggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
     const name = event.target.name
     const id = event.target.id
     const fixed = typeof id === 'string' ? id.charAt(0).toUpperCase() + id.slice(1) : id
+    const fixedName = typeof name === 'string' ? name.charAt(0).toUpperCase() + name.slice(1) : name
     if (!value) {
-      setStates({ ...states, ['do' + fixed + 'Err']: true, [id + 'Helper']: 'Completa este campo', [name]: value, emailBlur: true })
+      functions['setDo' + fixed + 'Err'](true)
+      functions['set' + fixed + 'Helper']('Completa este campo')
+      functions['set' + fixedName](value)
+      setEmailBlur(true)
     } else {
-      setStates({ ...states, ['do' + fixed + 'Err']: false, [id + 'Helper']: '', [name]: value })
+      functions['setDo' + fixed + 'Err'](false)
+      functions['set' + fixed + 'Helper']('')
+      functions['set' + fixedName](value)
     }
   }
 
   const emailToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
     const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
-    states.emailBlur && !value.match(regex) ?
-      setStates({ ...states, doEmailErr: true, emailHelper: 'Digita correctamente tu correo electrónico', email: value }) :
+    if (emailBlur && !value.match(regex)) {
+      setDoEmailErr(true)
+      setEmailHelper('Digita correctamente tu correo electrónico')
+      setEmail(value)
+    } else {
       toggle(event)
+    }
   }
 
-  const emailBlur = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setStates({ ...states, emailBlur: true })
+  const emailBlured = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmailBlur(true)
     event.target.value ? emailToggle(event) : toggle(event)
   }
 
   const nickToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
-    value.includes(' ') ? event.target.value = states.nickname : toggle(event)
+    value.includes(' ') ? event.target.value = nickname : toggle(event)
   }
 
-  const submit = (event: React.BaseSyntheticEvent) => {
+  const submit = async (event: React.BaseSyntheticEvent) => {
     event.preventDefault()
-    if (!states.doLastErr && !states.doNameErr && !states.doEmailErr && !states.doNickErr && !states.doPassErr) {
-      setStates({ ...states, doCharge: true })
-      /*
-      register(states.email, states.password).then((res) => {
-        const user = res.user//firebase.auth().currentUser
-        if (user) {
-          user.updateProfile({
-            displayName: states.name + ' ' + states.lastName
-          }).then(() => {
-            user.sendEmailVerification().then(() => {
-              setStates({ ...states, doCharge: false })
-              console.log('Te hemos enviado un correo electrónico')
-            }).catch(() => {
-              setStates({ ...states, doCharge: false })
-              console.log('Correo electrónico fallido :c')
-            })
-          }).catch(() => {
-            setStates({ ...states, doCharge: false })
-          })
-        } else {
-          throw new Error('Error al crear el nuevo usuario :\'c')
-        }
-      }).catch(() => {
-        setStates({ ...states, doCharge: false })
-      })
-      */
+    if (!doLastErr && !doNameErr && !doEmailErr && !doNickErr && !doPassErr) {
+      setDoCharge(true)
+      await register(email, password, name, lastName)
+        .then(usr => {
+          dispatch({ type: SET_USER, payload: usr })
+          setDoCharge(false)
+          setOpenDialog(true)
+          setDialogTitle('Verificación')
+          setDialogMessage(`Se ha enviado un link de verificación al correo electrónico ${email}`)
+        }).catch(err => {
+          switch (err.code) {
+            case 'auth/email-already-in-use': {
+              setEmailHelper('El correo electrónico ya está en uso')
+              setDoEmailErr(true)
+              break;
+            }
+            case 'auth/invalid-email': {
+              setEmailHelper('Digita correctamente tu correo electrónico')
+              setDoEmailErr(true)
+              break;
+            }
+            case 'auth/weak-password': {
+              setPassHelper('La contraseña es demasiado débil')
+              setDoPassErr(true)
+              break;
+            }
+            default: {
+              setDialogTitle('No se pudo completar el registro')
+              setIsDialogError(true)
+              setDialogMessage('Error interno del servidor')
+              setOpenDialog(true)
+              break;
+            }
+          }
+          setDoCharge(false)
+        })
     }
   }
 
-  const handleClickShowPassword = () => setStates({ ...states, ['visibility']: !states.visibility })
+  const googleLogin = () => {
+    setDoEmailErr(false)
+    setDoPassErr(false)
+    setEmailHelper('')
+    setEmailBlur(false)
+    setDoCharge(true)
+    setOpenDialog(false)
+    signIn(1, true)
+      .then(usr => {
+        dispatch({ type: SET_USER, payload: usr })
+        setDoCharge(false)
+        history.push('/game')
+      }).catch(err => {
+        setOpenDialog(true)
+        setIsDialogError(true)
+        setDialogTitle('Error al registrarse con Google')
+        switch (err.code) {
+          case 'auth/cancelled-popup-request': {
+            setDialogMessage('El registro ha sido bloqueado por el servidor')
+            break;
+          }
+          case 'auth/popup-blocked': {
+            setDialogMessage('El Pop-Up ha sido bloqueado por el navegador')
+            break;
+          }
+          case 'auth/popup-closed-by-user': {
+            setDialogMessage('Cerraste el PopUp de registro con Google antes de tiempo')
+            break;
+          }
+          default: {
+            setDialogMessage('Error al tratar de registrar con Google')
+            break;
+          }
+        }
+        setDoCharge(false)
+      })
+  }
+
+  const handleClickShowPassword = () => setVisibility(visibility => !visibility)
 
   const preventDefault = (event: React.BaseSyntheticEvent) => event.preventDefault()
 
@@ -138,8 +229,8 @@ export default function Register(): JSX.Element {
             id="name"
             onChange={toggle}
             onBlur={toggle}
-            error={states.doNameErr}
-            helperText={states.nameHelper}
+            error={doNameErr}
+            helperText={nameHelper}
             required
             InputLabelProps={
               {
@@ -157,8 +248,8 @@ export default function Register(): JSX.Element {
             className="last-name"
             onChange={toggle}
             onBlur={toggle}
-            error={states.doLastErr}
-            helperText={states.lastHelper}
+            error={doLastErr}
+            helperText={lastHelper}
             required
             InputLabelProps={
               {
@@ -176,8 +267,8 @@ export default function Register(): JSX.Element {
           id="nick"
           onChange={nickToggle}
           onBlur={toggle}
-          error={states.doNickErr}
-          helperText={states.nickHelper}
+          error={doNickErr}
+          helperText={nickHelper}
           required
           InputLabelProps={
             {
@@ -193,9 +284,9 @@ export default function Register(): JSX.Element {
           name="email"
           id="email"
           onChange={emailToggle}
-          onBlur={emailBlur}
-          error={states.doEmailErr}
-          helperText={states.emailHelper}
+          onBlur={emailBlured}
+          error={doEmailErr}
+          helperText={emailHelper}
           required
           InputLabelProps={
             {
@@ -204,10 +295,10 @@ export default function Register(): JSX.Element {
           }
         />
         <FormControl variant="outlined"
-          error={states.doPassErr}>
+          error={doPassErr}>
           <InputLabel>Contraseña</InputLabel>
           <OutlinedInput
-            type={states.visibility ? 'text' : 'password'}
+            type={visibility ? 'text' : 'password'}
             onChange={toggle}
             onBlur={toggle}
             endAdornment={
@@ -218,9 +309,9 @@ export default function Register(): JSX.Element {
                   edge="end"
                 >
                   {
-                    !states.visibility ?
-                      <Visibility color={states.doPassErr ? 'secondary' : 'inherit'} /> :
-                      <VisibilityOff color={states.doPassErr ? 'secondary' : 'inherit'} />
+                    !visibility ?
+                      <Visibility color={doPassErr ? 'secondary' : 'inherit'} /> :
+                      <VisibilityOff color={doPassErr ? 'secondary' : 'inherit'} />
                   }
                 </IconButton>
               </InputAdornment>
@@ -230,7 +321,7 @@ export default function Register(): JSX.Element {
             id="pass"
             required
           />
-          {states.doPassErr ? <FormHelperText>{states.passHelper}</FormHelperText> : ''}
+          {doPassErr ? <FormHelperText>{passHelper}</FormHelperText> : ''}
         </FormControl>
         <Button
           variant="contained"
@@ -259,7 +350,7 @@ export default function Register(): JSX.Element {
           <Grid xs item ></Grid>
           <Grid>
             <Link
-              to="/login" BuildBuild
+              to="/login"
               component={RouterLink}
             >
               ¿Ya tienes una cuenta? Inicia sesión
@@ -270,7 +361,37 @@ export default function Register(): JSX.Element {
       <Box>
         <Copyright />
       </Box>
-      {states.doCharge ? <LinearProgress className="charge" /> : ''}
+      <Backdrop open={doCharge} className='backdrop' >
+        <LinearProgress className="charge" />
+      </Backdrop>
+      <Dialog
+        open={openDialog}
+        onClose={() => {
+          setOpenDialog(false)
+          setIsDialogError(false)
+        }}
+      >
+        <DialogTitle>{dialogTitle}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{dialogMessage}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          {isDialogError ?
+            <Button onClick={googleLogin} color="primary">
+              Intentar Nuevamente
+            </Button> : ''
+          }
+          <Button
+            onClick={() => {
+              !isDialogError ? history.push('/login') : 0
+              setOpenDialog(false)
+              setIsDialogError(false)
+            }}
+            color="primary">
+            Aceptar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Grid>
   )
 }

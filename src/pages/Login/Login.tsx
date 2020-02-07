@@ -30,9 +30,8 @@ import Visibility from '@material-ui/icons/Visibility'
 import VisibilityOff from '@material-ui/icons/VisibilityOff'
 import { Link as RouterLink, useHistory } from 'react-router-dom'
 import { UserContext, SET_USER } from '../../components/Auth/UserProvider'
-import { signIn, WITH_EMAIL, getUser } from '../../components/Auth/FirebaseAuth'
-import { useAsync, Async } from 'react-async'
-import { User } from 'firebase'
+import { signIn, WITH_EMAIL, getUser, sendVerification, signOut, verifyUser } from '../../components/Auth/FirebaseAuth'
+import { useAsync } from 'react-async'
 
 export default function Login(): JSX.Element {
   const preventDefault = (event: React.SyntheticEvent) => event.preventDefault()
@@ -40,6 +39,9 @@ export default function Login(): JSX.Element {
   const { dispatch } = useContext(UserContext)
 
   const { data: user, isLoading } = useAsync({ promiseFn: getUser })
+
+  const [isVerified, setIsVerified] = useState(false)
+  const [isDisabled, setIsDisabled] = useState(false)
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -51,7 +53,8 @@ export default function Login(): JSX.Element {
 
   const [usrHelper, setUsrHelper] = useState('')
   const [passHelper, setPassHelper] = useState('')
-  const [googleErrorMessage, setGoogleErrorMessage] = useState('')
+  const [dialogMessage, setDialogMessage] = useState('')
+  const [dialogTitle, setDialogTitle] = useState('')
 
   const [doUsrErr, setDoUsrErr] = useState(false)
   const [doPassErr, setDoPassErr] = useState(false)
@@ -69,7 +72,7 @@ export default function Login(): JSX.Element {
   }, [isLoading])
   */
 
-  user ? history.push('/game') : 0
+  user ? user.emailVerified ? history.push('/game') : 0 : 0
 
   const usrBlur = () => {
     setDoUsrBlur(true)
@@ -117,10 +120,17 @@ export default function Login(): JSX.Element {
     if (!anyUsrErr && !anyPassErr) {
       setDoCharge(true)
       signIn(WITH_EMAIL, doRemember, username, password)
-        .then(usr => {
+        .then((usr: any) => {
           dispatch({ type: SET_USER, payload: usr })
+          setIsVerified(usr.emailVerified)
           setDoCharge(false)
-          history.push('/game')
+          if (usr.emailVerified) {
+            history.push('/game')
+          } else {
+            setDialogTitle('Verificación')
+            setDialogMessage('Hemos enviado antes un link de verificación al correo electrónico ' + username + ', si no lo has recibido, podemos enviártelo nuevamente')
+            setOpenDialog(true)
+          }
         }).catch(err => {
           switch (err.code) {
             case 'auth/user-disabled':
@@ -169,21 +179,22 @@ export default function Login(): JSX.Element {
         history.push('/game')
       }).catch(err => {
         setOpenDialog(true)
+        setDialogTitle('Error al iniciar sesión con Google')
         switch (err.code) {
           case 'auth/cancelled-popup-request': {
-            setGoogleErrorMessage('El inicio de sesión ha sido bloqueado por el servidor')
+            setDialogMessage('El inicio de sesión ha sido bloqueado por el servidor')
             break;
           }
           case 'auth/popup-blocked': {
-            setGoogleErrorMessage('El Pop-Up ha sido bloqueado por el navegador')
+            setDialogMessage('El Pop-Up ha sido bloqueado por el navegador')
             break;
           }
           case 'auth/popup-closed-by-user': {
-            setGoogleErrorMessage('Cerraste el PopUp de inicio de sesión con Google antes de tiempo')
+            setDialogMessage('Cerraste el PopUp de inicio de sesión con Google antes de tiempo')
             break;
           }
           default: {
-            setGoogleErrorMessage('Error al tratar de iniciar sesión con Google')
+            setDialogMessage('Error al tratar de iniciar sesión con Google')
             break;
           }
         }
@@ -338,19 +349,46 @@ export default function Login(): JSX.Element {
         open={openDialog}
         onClose={() => setOpenDialog(false)}
       >
-        <DialogTitle>{"Error al iniciar sesión con Google"}</DialogTitle>
+        <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
-          <DialogContentText>{googleErrorMessage}</DialogContentText>
+          <DialogContentText>{dialogMessage}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={googleLogin} color="primary">
-            Intentar Nuevamente
-          </Button>
-          <Button onClick={() => setOpenDialog(false)} color="primary">
+          {isVerified ?
+            <Button onClick={googleLogin} color="primary">
+              Intentar Nuevamente
+            </Button> :
+            <Button
+              onClick={async () => {
+                setIsDisabled(true)
+                setDoCharge(true)
+                await sendVerification()
+                await signOut()
+                setDoCharge(false)
+                setOpenDialog(false)
+                setIsDisabled(false)
+              }}
+              color="primary"
+              disabled={isDisabled}
+            >
+              Enviar Nuevamente
+            </Button>
+          }
+          <Button
+            onClick={async () => {
+              setDoCharge(true)
+              if (!isVerified) {
+                await signOut()
+              }
+              setDoCharge(false)
+              setOpenDialog(false)
+            }}
+            color="primary"
+          >
             Aceptar
           </Button>
         </DialogActions>
       </Dialog>
-    </Grid >
+    </Grid>
     : <div></div>)
 }

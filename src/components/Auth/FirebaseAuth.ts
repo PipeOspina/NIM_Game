@@ -1,5 +1,6 @@
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
+import { User } from '@firebase/auth-types'
 import config from '../../utils/consts/config'
 
 export const WITH_GOOGLE = 1
@@ -9,12 +10,22 @@ const app = firebase.initializeApp(config)
 
 export default app
 
-export const getUser = async () => {
+export const getUser = async (): Promise<User | null> => {
     return await new Promise(resolve => {
         app.auth().onAuthStateChanged((usr) => {
-            console.log('promise', usr)
             resolve(usr)
         })
+    })
+}
+
+export const register = async (email: string, password: string, name: string, lastName: string) => {
+    return await new Promise(async (resolve, reject) => {
+        await app.auth().createUserWithEmailAndPassword(email, password).catch(reject)
+        const user: User | null = await getUser()
+        user ? await user.sendEmailVerification() : null
+        const displayName = `${name.charAt(0).toUpperCase()}${name.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase()}${lastName.slice(1).toLowerCase()}`
+        user ? user.updateProfile({ displayName }) : 0
+        resolve(await signOut())
     })
 }
 
@@ -49,6 +60,24 @@ export const signOut = async () => {
     return await new Promise(async (resolve, reject) => {
         await app.auth().signOut().catch(reject)
         resolve(await getUser())
-    }
-    )
+    })
+}
+
+export const sendVerification = async () => {
+    return await new Promise(async (resolve, reject) => {
+        const user = await getUser()
+        if (user) {
+            await user.sendEmailVerification().catch(reject)
+            resolve(await getUser())
+        }
+    })
+}
+
+export const verifyUser = async (code: string) => {
+    return await new Promise(async (resolve, reject) => {
+        await app.auth().applyActionCode(code).then(res => {
+            console.log('code', res)
+        }).catch(reject)
+        resolve(await getUser())
+    })
 }

@@ -24,12 +24,10 @@ export default function PrivateRoute({ component: RouteComponent, ...rest }: any
                             render={(routeProps?: any) => {
                                 return (
                                     usr ?
-                                        usr.email ?
-                                            usr.email !== '' ?
-                                                <RouteComponent {...routeProps} /> :
-                                                redirect() ://<Redirect push to='/login' /> :
+                                        usr.emailVerified ?
+                                            <RouteComponent {...routeProps} /> :
                                             redirect() ://<Redirect push to='/login' /> :
-                                        redirect() //<Redirect push to='/login' />
+                                        redirect() //<Redirect push to='/login' /> 
                                 )
                             }}
                         />

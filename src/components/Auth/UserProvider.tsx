@@ -1,11 +1,8 @@
 import React, { createContext, useReducer } from 'react'
 import { getUser } from './FirebaseAuth'
+import { User as FireUser } from '@firebase/auth-types'
 
 export const SET_USER = 1
-
-interface User {
-    email: string
-}
 
 interface Dispatch {
     type?: 1
@@ -13,11 +10,11 @@ interface Dispatch {
 }
 
 interface Reducer {
-    user?: User
+    user?: FireUser
     dispatch?: any
 }
 
-const initialUser: User = async () => await getUser()
+const initialUser: Promise<FireUser> = async () => await getUser()
 
 const initialReducer: Reducer = {
     user: initialUser(),
@@ -27,7 +24,7 @@ const initialReducer: Reducer = {
 const UserContext = createContext(initialReducer)
 const { Provider } = UserContext
 
-const reducer = (user: User, dispatch: Dispatch) => {
+const reducer = (user: FireUser, dispatch: Dispatch) => {
     const { type, payload } = dispatch
     switch (type) {
         case SET_USER: {
